@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel.Design;
 using System.Net.Http.Headers;
 using System.Net.NetworkInformation;
@@ -7,23 +8,53 @@ using System.Numerics;
 using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Linq;
 
-int[] values = new int[3];
-values[0] = 1;
-values[1] = 2;
-values[2] = 3;
+//
 
-int sum = 0;
-for (int i = 0; i < values.Length; i++)
-{
-    for (int k = i + 1; k < values.Length; k++)
-    {
-        sum += values[k] * values[i];
-    }
-}
+#region Karalama
+//Matrix<float> denklem = new(3, 3);
+//denklem.AddValue(1, 0);
+//denklem.AddValue(2, 1);
+//denklem.AddValue(-3, 2);
+//denklem.AddValue(2, 3);
+//denklem.AddValue(-1, 4);
+//denklem.AddValue(4, 5);
+//denklem.AddValue(1, 6);
+//denklem.AddValue(-1, 7);
+//denklem.AddValue(1, 8);
 
-Console.WriteLine($"Toplam: {sum}");
+//Matrix<float> b = new(1, 3);
+//b.AddValue(6, 0);
+//b.AddValue(1, 1);
+//b.AddValue(3, 2);
 
+//Console.WriteLine("İşlem Yapmadan Önce");
+//denklem.Print();
+//Console.WriteLine("Üç Katı alınmış Hali");
+//Matrix<float> ucKati = denklem.MapCopy(x => x * 3);
+//ucKati.Print();
+
+//Matrix<float> result = denklem.Solve(b);
+//Matrix<float> matrisinTersi = denklem.DecomposeToLu();
+//Console.WriteLine("Matrisin Tersi");
+//matrisinTersi.Print();
+//Console.WriteLine("Sonuç");
+//result.Print();
+
+//int[] values = new int[3];
+//values[0] = 1;
+//values[1] = 2;
+//values[2] = 3;
+//int sum = 0;
+//for (int i = 0; i < values.Length; i++)
+//{
+//    for (int k = i + 1; k < values.Length; k++)
+//    {
+//        sum += values[k] * values[i];
+//    }
+//}
+//Console.WriteLine($"Toplam: {sum}");
 //Matrix<float> A = new(3, 3);
 //Matrix<float> B = new(3, 3);
 //A.AddValue(2, 0);
@@ -115,7 +146,7 @@ Console.WriteLine($"Toplam: {sum}");
 
 //string metin = "abc";// Hafızada yeri caer/// strings are immutable 
 //metin += "d";// hafızada yeni bir yer 
-
+#endregion
 
 class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını kullanmak için IFloat tipinden kalıtım aldık.
 {
@@ -125,6 +156,7 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
     readonly int col;
     private T[] _values; // Artık double değil, T tipinde.
     int TotalElements => row * col; //Bu pek de lazım değil aslında.
+    private static Random _random = new(); //Random nesnesini metodun içerisinde oluşturmak çok sağlıklı bir yaklaşım değil neden ?? For döngüsü içinde çağrıldığı zaman bilgisayar clock'u aynı kalacağı için bütün random vektörleri aynı değeri alırdı.Buna biraz daha detaylı bak.
 
     public Matrix(int row, int col)
     {
@@ -328,7 +360,7 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
 
         return result;
     }
-    public Matrix<T> DecomposeToLu() // Not: Aslında bu metot ters matris dönüyor, adını InvertWithLU() veya GaussJordanInverse() yapmak daha şık olabilir.
+    public Matrix<T> DecomposeToLu()
     {
         // 1. ÖNCE KONTROL: Kare matris değilse tersi alınamaz.
         if (row != col)
@@ -828,11 +860,7 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
     public Matrix<T> Copy()
     {
         Matrix<T> copy = new(this.row, this.col);
-
-        for (int i = 0; i < _values.Length; i++)
-        {
-            copy._values[i] = this._values[i];
-        }
+        Array.Copy(this._values, copy._values, this._values.Length); //for döngüsü ile dönmeden daha maliyetsizdir!
         return copy;
     }
 
@@ -1030,13 +1058,13 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         // ||B||^2= B.B demek. B sıfır ise zaten hem büyüklüğü hem de iç çarpımı sıfır olacaktır.
         T sqrMagB = B.Dot(B);
 
-        if (sqrMagB ==T.Zero)
+        if (sqrMagB == T.Zero)
         {
             throw new InvalidOperationException("Sıfır vektörü üzerine izdüşüm alınamaz.");
         }
 
-        T dotProduct = this.Dot(B);    
-        T scalar= dotProduct/sqrMagB;
+        T dotProduct = this.Dot(B);
+        T scalar = dotProduct / sqrMagB;
         return B * scalar;
     }
     public T ScalarProjection(Matrix<T> B)
@@ -1070,7 +1098,7 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
 
         if (this._values.Length != B._values.Length)
         {
-            throw new InvalidOperationException($"Vektör uzunlukları uyuşmuyor: {this._values.Length} ve {B._values.Length}. Dot Product yapılamaz.");
+            throw new InvalidOperationException($"Vektör uzunlukları uyuşmuyor: {this._values.Length} ve {B._values.Length}. Cross Product yapılamaz.");
         }
         //2.Adım: return edececeğimiz sonuç vektörünü tanımlayalım
         Matrix<T> result = new Matrix<T>(this.row, this.col);
@@ -1260,7 +1288,6 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return true;
     }
 
-
     // İki parametrik doğrunun kesişim noktasını bulur (Kesişim varsa true döner ve out parametresini doldurur)
     public bool IntersectLineWithLine(Matrix<T> line1Dir, Matrix<T> line2Origin, Matrix<T> line2Dir, out Matrix<T> intersectionPoint)
     {
@@ -1318,7 +1345,6 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return distance;
         //Not: Biz noktanın doğrunun önünde arkasında vs vs yani neresinde kaldığına göre distance aramıyoruz bu yüzden SignedDistance işaretli mesafe hesaplamamıza gerek yok.
     }
-
     // Bir noktanın bir doğruya en kısa (dik) uzaklığını hesaplar
     public T DistanceToLine(Matrix<T> lineOrigin, Matrix<T> lineDirection)
     {
@@ -1339,12 +1365,12 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         //1.Adım: Doğrunun başlangıç noktasından noktaya bir vektör çizelim ve PQ vektörü diyelim.P başlangıç Q ise noktayı temsil etsin
         Matrix<T> PQ = this - lineOrigin;
         //2.Adım: Çapraz çarpım ile  PQ ve line direction arasında kalan paralel kenarın alanını bulalım
-        Matrix<T> area = PQ.Cross(lineDirection); //İç çarpım sıfır ise nokta doğrunun üzerindedir ve nokta doğru üzerinde ise mesafesi sıfır çıkar. Bu yüzden herhangi bir ekstra kontrol yapmadım.
+        Matrix<T> area = PQ.Cross(lineDirection); //Çapraz çarpım sıfır ise nokta doğrunun üzerindedir ve nokta doğru üzerinde ise mesafesi sıfır çıkar. Bu yüzden herhangi bir ekstra kontrol yapmadım.
         //3.Adım: Paralelkenarın yüksekliğini yani noktanın doğruya en yakın mesafesini hesaplayalım
-        T h = area.Magnitude() / lineDirection.Magnitude();
+        T h = area.Magnitude() / dirMag;
         return h;
+        //T h = area.Magnitude() / lineDirection.Magnitude();
     }
-
     // Bir noktanın doğru üzerindeki izdüşüm noktasını bulur
     public Matrix<T> ProjectOnLine(Matrix<T> lineOrigin, Matrix<T> lineDirection)
     {
@@ -1360,7 +1386,6 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return lineOrigin + projectionVector;
         //DİKKAT: 3. adımı düşünemedim!
     }
-
     public Matrix<T> ProjectOnPlane(Matrix<T> planeOrigin, Matrix<T> planeNormal)
     {
         //Temel Mantık şu:Temelde rejection vektörü bulacağız.Düzlemin orijininden notaya bir vektör çiz. Bu vektörün normal üzerine yansımasını(project) al.Yansımayı daha sonra normal ile çarpıp vektör haline getir
@@ -1385,32 +1410,98 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return this - rejectionVector;
     }
 
+    // Bu vektöre dik olan rastgele bir vektör üretir (İç çarpımı 0 olan)
+    public Matrix<T> GetOrthogonalVector()
+    {
+        //Temel Mantık şu:Rastgele bir vektör üretiyoruz. Bu rastgele vektörü elimizdeki vektör ile çapraz çarpıma sokuyoruz ve return ediyoruz. Çünkü çapraz çarpım iki vektöre dik üçüncü bir vektör üretir.
+        //Milyarda bir ihtmal olmasının sebebi -100 ile 100 arasında bir rakam seçmemiz.
+        Matrix<T> randomVector = new(1, 3);
+        randomVector._values[0] = GetRandomNumber(T.CreateChecked(-100), T.CreateChecked(100));
+        randomVector._values[1] = GetRandomNumber(T.CreateChecked(-100), T.CreateChecked(100));
+        randomVector._values[2] = GetRandomNumber(T.CreateChecked(-100), T.CreateChecked(100));
+        Matrix<T> result = this.Cross(randomVector);
+        return result;
+    }
+
+    // Ax = b sistemini çözerek x vektörünü/matrisini döndürür
+    public Matrix<T> Solve(Matrix<T> b)
+    {
+        //Temel Mantık şu: A matrisinin tersini DecomposeToLu() metodu ile tersini alacağım daha sonra aşırı yüklediğim * operatörü kullanara ile b'yi sağdan  ters matris ile çarpacağım.
+        Matrix<T> inverse = this.DecomposeToLu();
+        return b * inverse;
+    }
+
+    // Dışarıdan verilen bir matematiksel fonksiyonu matrisin tüm elemanlarına uygular
+    public Matrix<T> Map(Func<T, T> function)
+    {
+        // 0.Adım: Argüman olarak verilen function'ın null olup olmadğının kontrolünü yapalım.Yoksa null hatası fırlatır.
+        if (function == null)
+        {
+            throw new ArgumentNullException(nameof(function), "Map işlemi için bir fonksiyon verilmelidir.");
+        }
+        for (int i = 0; i < this._values.Length; i++)
+        {
+            this._values[i] = function(this._values[i]);
+        }
+        return this;
+
+    }
+    // Map metodunun matrisin kendisini değiştirmeyip, yeni bir matris döndüren versiyonu
+    public Matrix<T> MapCopy(Func<T, T> function)
+    {
+        // 0.Adım: Argüman olarak verilen function'ın null olup olmadğının kontrolünü yapalım.Yoksa null hatası fırlatır. 
+        if (function == null)
+        {
+            throw new ArgumentNullException(nameof(function), "Map işlemi için bir fonksiyon verilmelidir.");
+        }
+        //1.Adım: function null değilse kopyalama işlemi yapabiliriz.
+        Matrix<T> copy = this.Copy();
+        //1.Adım: DRY prensibine uymak için önceden yazdığım kodu çağırdım
+        return copy.Map(function);
+    }
+
+
+
+
 
 
     #region Static Metotlar
+    internal static T GetRandomNumber<T>(T min, T max) where T : INumber<T>
+    {
+        //0.Adım:Argüman kontrolü.Min değer max değerden büyük olursa hata fırlatıyoruz.
+        if (min > max)
 
+            throw new ArgumentException("Minimum değer maksimum değerden büyük olamaz");
+
+        // 1.Adım: Sıfır ile bir arasında rastgele bir sayı üret
+        double scale = _random.NextDouble();
+        // 2. Argümanları double'a çeviripi accuracy'i arttır
+        double minAsDouble = Convert.ToDouble(min);
+        double maxAsDouble = Convert.ToDouble(max);
+        // 3. Rastgele sayıyı double formatında hesapla.Temelde max-min yapıp range buluyoruz ve bunu ölçeklendirip min'e ekliyoruz
+        double randomDouble = minAsDouble + (scale * (maxAsDouble - minAsDouble));
+        // 4. Elimizdeki dobule sayısını generic type T'ye dönüştürüp returnlüyoruz.
+        return T.CreateChecked(randomDouble);
+
+    }
     static public Matrix<T> ProjectOnPlane(Matrix<T> pointOrigin, Matrix<T> planeOrigin, Matrix<T> planeNormal)
     {
         return pointOrigin.ProjectOnPlane(planeOrigin, planeNormal);
     }
-
     public static Matrix<T> ProjectOnLine(Matrix<T> pointOrigin, Matrix<T> lineOrigin, Matrix<T> lineDirection)
     {
         return pointOrigin.ProjectOnLine(lineOrigin, lineDirection);
     }
 
-
     public static bool IntersectLineWithLine(Matrix<T> line1Origin, Matrix<T> line1Dir, Matrix<T> line2Origin, Matrix<T> line2Dir, out Matrix<T> intersectionPoint)
     {
         return line1Origin.IntersectLineWithLine(line1Dir, line2Origin, line2Dir, out intersectionPoint);
     }
-
     //Doğru ile düzlemin kesişip kesişmediğini bulan static metot
     public static bool IntersectLineWithPlane(Matrix<T> line1Origin, Matrix<T> lineDir, Matrix<T> planeOrigin, Matrix<T> planeNormal, out Matrix<T> intersectionPoint)
     {
         return line1Origin.IntersectLineWithPlane(lineDir, planeOrigin, planeNormal, out intersectionPoint);
     }
-
 
     //Hadamard Çarpımının diğer ismi Elementwise product.Bu isim için delegate atama işlemi yaptık.
     static public Matrix<T> ElementwiseProduct(Matrix<T> A, Matrix<T> B)
@@ -1458,20 +1549,32 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
     }
     //Bu metot A-B-C noktalarını alır AB ve AC vektörlerini oluşturup ABxAC işlemini yaparak yeni vektör döndürür.
     /// <summary>
-    /// A-B-C noktalarından bir yüzey oluşturur ve bu yüzeye dik olan vektörünü cross product yaparak hesaplar.Sırasıyla AB ve AC vektörlerini hesaplayıp çalışır.
+    /// A-B-C noktalarından bir yüzey oluşturur ve bu yüzeye dik olan vektörünü cross product yaparak hesaplar.Sırasıyla AB ve AC vektörlerini hesaplayıp çalışır.Normal vektörü olduğu için vektörün default olarak büyüklüğünü bir yapar.
     /// </summary>
-    /// <param name="A">A noktası</param>
-    /// <param name="B">B noktası</param>
-    /// <param name="C">C noktası</param>
+    /// <param name="A"></param>
+    /// <param name="B"></param>
+    /// <param name="C"></param>
+    /// <param name="normalize">Default değeri true'dur.Bu sayede vektörün büyüklüğü her zaman bir olarak döner.</param>
     /// <returns></returns>
-    static public Matrix<T> CalcSurfaceNormal(Matrix<T> A, Matrix<T> B, Matrix<T> C)
+    /// <exception cref="ArgumentNullException"></exception>
+    static public Matrix<T> CalcSurfaceNormal(Matrix<T> A, Matrix<T> B, Matrix<T> C, bool normalize=true)
     {
-        //1:Adım:Önce vektörleri oluşturalım.
+        //0.Adım: Edge Case kontrolü:
+        if (A == null || B == null || C == null)
+        {
+            throw new ArgumentNullException("Yüzey normali hesaplamak için verilen noktalar null olamaz.");
+        }
+
+        //1.Adım:Önce vektörleri oluşturalım.
         Matrix<T> AB = B - A; //AB vektörü B-A yaparak elde edilir.
         Matrix<T> AC = C - A; //Aynı şekilde AC vektörü C-A ile oluşturduk.
         //Burada tekrardan boyut kontrolü yapmıyorum çünkü çağıracağım  public Matrix<T> Cross(Matrix<T> B) imzalı metot içerisinde zaten kontrol var
-        //2.Adım: Daha önceden yazdığım metodu return etmek için çağıralım
-        return AB.Cross(AC);
+        //2.Adım: Yüzey normalini hesaplayalım
+        Matrix<T> normal = AB.Cross(AC);
+        //3.Adım: normal vektörünü normalize edelim yani yönü tutup uzunluğuğ bir yapalım.
+        return normalize ? normal.GetNormalized() : normal;  
+        
+
     }
     static public Matrix<T> Cross(Matrix<T> A, Matrix<T> B)
     {
