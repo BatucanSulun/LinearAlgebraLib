@@ -148,6 +148,26 @@ using System.Linq;
 //metin += "d";// hafızada yeni bir yer 
 #endregion
 
+Matrix<float> point = new(1, 3);
+point.AddValue(1, 0);
+point.AddValue(2, 1);
+point.AddValue(2, 2);
+
+Matrix<float> planeOrigin = new(1, 3);
+planeOrigin.AddValue(1, 0);
+planeOrigin.AddValue(0, 1);
+planeOrigin.AddValue(0, 2);
+
+Matrix<float> planeNormal = new(1, 3);
+planeNormal.AddValue(2, 0);
+planeNormal.AddValue(-1, 1);
+planeNormal.AddValue(2, 2);
+    
+Matrix<float>enYakinKoordinat= point.ProjectOnPlane(planeOrigin, planeNormal);
+
+Console.WriteLine("En Yakın Nokta:");
+enYakinKoordinat.Print();
+
 class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını kullanmak için IFloat tipinden kalıtım aldık.
 {
     // Epsilon'u T tipine göre dinamik üretiyoruz.
@@ -957,7 +977,12 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         MatrixPower(3);
     }
 
-    public T Magnitude() ////Bir vektörün uzunluğunu veya büyüklüğünü(magnitude) hesaplaya metot.??
+    /// <summary>
+    /// Bir vektörün büyüklüğünü, uzunluğunu hesaplayan metot
+    /// </summary>
+    /// <returns>Bir sayı döndürür</returns>
+    /// <exception cref="InvalidOperationException"> Vektörün satırı veya sütunu bir değilse bu hatayı fırlatır.</exception>
+    public T Magnitude() 
     {
         //Eğer gerçek bir vektör ise satır veya sütun 1 olmalı.Bu kontrol bu yüzden var.
         if (row != 1 && col != 1)
@@ -973,6 +998,11 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return T.Sqrt(sum);
     }
 
+    /// <summary>
+    /// Vektörü normalize eden metot. Yönünü aynen koruyarak büyüklüğünü(Magnitude) bir yapan metot
+    /// </summary>
+    /// <returns>Bir vektör döndürür</returns>
+    /// <exception cref="InvalidOperationException"> Normalize edilecek metot sıfır vektörü ise bu hatayı verir çünkü büyüklük sıfır olduğu için sıfıra bölme durumu gelir.</exception>
     public Matrix<T> GetNormalized()
     {
         T magnitude = this.Magnitude();
@@ -989,7 +1019,12 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return copy;
     }
 
-    //Dot Product Çarpımını kodlayalım
+    /// <summary>
+    /// İki vektörün iç çarpımını (dot product) verir
+    /// </summary>
+    /// <param name="v"> İç çarpımı alınacak vektörü temsil eden metot argümanı</param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException">Dot product yapılacak iki vektörün boyut kontrolünü yapar. Vektörlerin ya sütunları bir ya da satırları bir tane olmalıdır. Ayrıca iki vektörün boyutlarının da aynı olup olmadığını kontrol eder.</exception>
     public T Dot(Matrix<T> v)
     {
         //Önce boyut kontrolü yapalım.Boyutlar tutmuyorsa hata fırlatıp çıkarız.Bilgi kaybını engellemek için kopyalama işlemini yapmamıza da gerek yok
@@ -1013,6 +1048,12 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return sum;
     }
 
+    /// <summary>
+    /// Bir vektörün argüman olarak verilen vektör ile arasındaki açıyı hesaplar.
+    /// </summary>
+    /// <param name="B">Nesne ile arasındaki açı hesaplanacak diğer vektör.</param>
+    /// <returns>İki vektörün arasındaki açıyı derece cinsinden döner</returns>
+    /// <exception cref="InvalidOperationException"> Her iki vektörden birinin büyüklüğü sıfır ise hata fırlatır. Çünkü sıfır vektörünün açısı tanımsızdır.</exception>
     public T Angle(Matrix<T> B)
     {
         T magnitudeA = this.Magnitude();
@@ -1028,7 +1069,13 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         angle = T.Clamp(angle, -T.One, T.One);//Cauchy-Schwarz kuralı sayesinde u.v<= ||u||.||v|| olsuğunu biliyoruz.Metodu bir nevi "kurşun işlemez" hale getiriyoruz.
         return T.RadiansToDegrees(T.Acos(angle));//T.Acos(angle) bu işlem sonucu yine radyan çıkıyor bu çıkan hala radyan.Bu radyanı açıya döndürmemiz lazım.
     }
-    //Bir vektörün argüman olarak verilen vektörün üzerine yansıma vektörünü bulur.Dikkat et yansıma vektörünün büyüklüğünü bulmaz.Vektörün direkt kendisini verir.
+
+    /// <summary>
+    /// Bir vektörün argüman olarak verilen vektörün üzerine yansıma vektörünü bulur.Dikkat et yansıma vektörünün büyüklüğünü bulmaz.Vektörün direkt kendisini verir.
+    /// </summary>
+    /// <param name="B">Üzerine dik izdüşüm alınacak vektör</param>
+    /// <returns>Yansıma vektörünü döndürür.Dikkat izdüşüm vektörünün koordinatlarını veya büyüklüğünü vermez vektörün kendisini verir.</returns>
+    /// <exception cref="InvalidOperationException"> Sıfır vektörü üzerine izdüşüm alınamaz çünkü payda sıfır olursa tanımsızlık durumuna girer.</exception>
     public Matrix<T> Project(Matrix<T> B)
     {
         #region Metodun eski hali.Bilerek silmedim saklıyorum
@@ -1067,6 +1114,11 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         T scalar = dotProduct / sqrMagB;
         return B * scalar;
     }
+    /// <summary>
+    /// Argüman olarak alınan vektörün üzerine dik izdüşümü alınan vektörün büyüklüğünü hesaplar.
+    /// </summary>
+    /// <param name="B">Üzerine izdüşüm alıancak vektörü temsil eden metot argümanı</param>
+    /// <returns>İzdüşüm vektörünün büyüklüğünü temsil eden sayıyı ger döndürür</returns>
     public T ScalarProjection(Matrix<T> B)
     {
 
@@ -1075,7 +1127,11 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         //Bu yöntemle direkt olarak B yönündeki yansımanın büyüklüğünü buluyoruz
         return this.Dot(B.GetNormalized());
     }
-
+    /// <summary>
+    /// Bir vektörün üzerinde olmayan,tam aksine ona dik olan bileşenini döndüren metot.
+    /// </summary>
+    /// <param name="B">Üzerine dik izdüşümü alınacak metot </param>
+    /// <returns>Dik bileşen vektörünü gönderir</returns>
     public Matrix<T> Reject(Matrix<T> B)
     {
         //Project metodu içerisinde zaten B ile ilgili bir kontrol yaptığım için burada tekrardan kontrol yapmama gerek yok.
@@ -1084,10 +1140,11 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
     }
 
     /// <summary>
-    /// Nesne üzerinden çağrıladığı zaman nesneyi vektör olarak kabul eder.Argüman olarak B ile verilen matrisi de hali hazırda bir vektör olarak kabul ederek işlem yapar.
+    ///  Çapraz çarpım metodu. İki vektöre dik olan üçüncü bir dik vektörü döndüren metot.Ek olarak, metodun döndürdüğü vektörün büyüklüğü iki vektörü arasında oluşan paralelkenarın alanına eşittir
     /// </summary>
-    /// <param name="B">İkinci vektör.Nokta değil vektör</param>
-    /// <returns>A vektörü ile B vektörünün cross product'ını döndürür.Sonuç vektörü bu iki vektöre diktir</returns>
+    /// <param name="B">Çapraz çarpıma sokulacak ikinci vektörü temsil eden metot argümanı</param>
+    /// <returns>Çapraz çarpım sonucu çıkan dik vektörü döndürür</returns>
+    /// <exception cref="InvalidOperationException">Çapraz çarpımı sadece 3D için yapar.Bu yüzden vektörler 3D değilse ve vektörlerin birbirlerine göre boyutları tutmuyorsa hata fırlatır </exception>
     public Matrix<T> Cross(Matrix<T> B)
     {
         //1.Adım: Önce boyut kontrolü yapmamız lazım.Boyut kontrolü:Cross product sadece R^3'te geçerlidir. Bu yüzden col!=3 kontrolü yaptım.Bu sayede hem 1x3 hem de 3x1 için çalışır.
@@ -1108,12 +1165,12 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         result._values[2] = (this._values[0] * B._values[1]) - (this._values[1] * B._values[0]);
         return result;
     }
-
     /// <summary>
-    /// İki boyutlu cross product yapan metot. İki boyutlu vektöre hayali bir z ekseni eklenmesi sonucu cross prodcut işlemini yapar.
+    /// 2D için çapraz çarpım yapan metot.Cisimlerin birbirlerine göre konumları hesaplamak için kullanılır.Verilen vektörler iki boyutlu olmalıdır.
     /// </summary>
-    /// <param name="B">Çarpılacak ikinci vektör</param>
-    /// <returns></returns>
+    /// <param name="B">Çapraz çarpıma sokulacak ikinci metodu temsil eden metot argümanı </param>
+    /// <returns>Çapraz çarpım sonucu çıkan metodu döndrür.</returns>
+    /// <exception cref="InvalidOperationException">2D'de çapraz çarpım yaptığı için boyutların 2D olmaması durumunda hata fırlatır</exception>
     public T Cross2D(Matrix<T> B)
     {
         //1.Adım: Önce boyut kontrolü yapmamız lazım. 2x1 veya 1x2 değilse hata fırlatmalı        
@@ -1125,6 +1182,11 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return (this._values[0] * B._values[1]) - (this._values[1] * B._values[0]);
     }
 
+    /// <summary>
+    /// Çapraz çarpım sonucu çıkan vektörü normalize eder.
+    /// </summary>
+    /// <param name="B">Çapraz çarpıma sokulacak ikinci vektörü temsil eden metot argümanı</param>
+    /// <returns>Büyüklüğü bir olan vektör döndürür</returns>
     public Matrix<T> CrossNormalized(Matrix<T> B)
     {
         //1.Adım: İki vekörün Cross product'ını hesaplayalım
@@ -1133,7 +1195,14 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return crossAB.GetNormalized();
     }
 
-    //Argüman olarak direkt vektörlerin kendisini alır. Herhangi bir şekilde noktadan vektör hesabı yapmaz.
+
+    /// <summary>
+    /// Scalar Triple Product metodu.Hem argüman olarak hem de çağrıldığı nesnenin vektör olduğunu kabul eder.Herhangi bir şekilde noktadan vektör hesaplama yapmaz.B ve C vektörlerini çapraz çarpıma sokup çıkan metodu nesne ile iç çarpıma sokar. A.(BxC) formulüne göre çalışır.
+    /// </summary>
+    /// <param name="B">Çapraz çarpıma sokulacak ilk vektör</param>
+    /// <param name="C">Çapraz çarpıma sokulacak ikinci vektör</param>
+    /// <returns>Bir sayı döndürür.Sayı sıfır değilse vektörler coplanar/eşdüzlemli değildir.</returns>
+    /// <exception cref="InvalidOperationException">Cross çarpım yaptığı için vektörlerin 3D'de olup olmadığının kontrolü sonucu hata fırlatır.</exception>
     public T ScalarTriple(Matrix<T> B, Matrix<T> C)
     {
         //1.Adım: Önce boyut kontrolü yapmamız lazım çünkü ScalarTriple sadece R^3'te sonuç verir.
@@ -1152,7 +1221,7 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
     }
 
     /// <summary>
-    /// Matrisin her bir elemanını verilen sayı ile çarpar.
+    /// Matrisin her bir elemanını verilen sayı ile çarpar. Map() metodunun sadece çarpma için daraltılmış hali.
     /// </summary>
     /// <param name="scaleFactor">Matris elemanlarının çarpılacağı sayıyı temsil eder.</param>
     public Matrix<T> ScaleMatrix(T scaleFactor)
@@ -1166,10 +1235,14 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         }
         //3.Adım:Skalalandırılmış matrisi döndürelim
         return copy;
-
-        //Soru: Bu metodu herhangi bir şekilde static olarak yazmama gerek yok çünkü zaten bir instance'ı etkiliyor.Doğru mu yanlış mı ??
     }
 
+    /// <summary>
+    /// Hadamard çarpımını gerçekleştiren metot
+    /// </summary>
+    /// <param name="B">Hadamard çarpımına sokulacak ikinci matrisi temsil eden metot argümanı</param>
+    /// <returns>Çarpım sonucu çıkan matrisi döndürür</returns>
+    /// <exception cref="InvalidOperationException">Boyut kontrolü sonucu ortaya çıkan uyuşmazlık için hata fırlatır.</exception>
     public Matrix<T> HadamardProduct(Matrix<T> B)
     {
         //1.Adım:Boyut kontrolü yapalım.
@@ -1189,18 +1262,22 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return result;
     }
     //Hadamard çarpımı için ElementWiseProduct adında delegate ekleme işini yaptım.Dikkat et bu metot zaten nesne üzerinden çağrılacağı için herhangi bir şekilde this ile kullanmana gerek yok.
+
+    /// <summary>
+    /// Hadamard Çaprımını yapan ancak ismi farklı olan metot.Metot özünde HadamardPrduct() metodunun bir delegate'dir 
+    /// </summary>
+    /// <param name="B">Hadamard çarpımına sokulacak ikinci matrisi temsil eden metot argümanı</param>
+    /// <returns>Hadamard çarpımı sonucu çıkan matrisi döndürür</returns>
     public Matrix<T> ElementWiseProduct(Matrix<T> B)
     {
         return HadamardProduct(B);
     }
-
-
     /// <summary>
-    /// İki vektörün Dış Çarpımını bulan metot
+    /// İki vektörün Dış Çarpımını bulan metot.
     /// </summary>
-    /// <param name="B">Dış Çarpım yapılacak ikinci vektör</param>
+    /// <param name="B">Dış Çarpım yapılacak ikinci vektörü temsik eden metot argümanı</param>
     /// <returns>Çarpım sonucu oluşan matrisi döndürür</returns>
-    /// <exception cref="InvalidOperationException">Boyut tutmaması durumnda fırlatırlan hata. İki vektörde ya sütun ya da satır vektörü olmalı</exception>
+    /// <exception cref="InvalidOperationException">Boyut tutmaması durumnda fırlatırlan hata. İki vektörde ya sütun ya da bir boyutlu(satır vektörü)olmalı</exception>
     public Matrix<T> OuterProduct(Matrix<T> B)
     {
         //1.Adım: Boyut kontrolü.Nesnelerin satır veya sütun vektörü olup olmadığının kontrolünü yapalım
@@ -1228,10 +1305,17 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         }
         return result;
     }
-
     //Metodun çağrıldığı nesne vektör olarak değil başlangıç noktası olarak işlem yapıyor.
     //Dikkat!: Metot imzası sadece bir kesişim noktası ve bool gönderdiği için doğrunun düzlemin üzerinde olma durumunda sonsuz noktada kesişim gerçekleştiği için tek bir nokta seçmeden hayır kesişmiyor diyip false gönderir.Metodu kasıtlı olarak bu şekilde tasarladım.
     //Alternatif olarak beta==T.zero koşulunun içerisine alfaif (alfa == T.Zero intersectionPoint = this; kodu eklenerek doğrunun başlangıç noktası kesişim noktası olarak gönderilebilir.
+    /// <summary>
+    /// Doğru ile düzlemin kesişip kesişmediğini bulan metot.Nesnenin arrayindeki değerleri doğrunun başlangıç noktası olarak kabul eder.
+    /// </summary>
+    /// <param name="lineDir">Doğrunun doğrultu vektörü(Direction Vector)</param>
+    /// <param name="planeOrigin">Düzlem üzerinde herhangi bir nokta</param>
+    /// <param name="planeNormal">Düzlemin normali</param>
+    /// <param name="intersectionPoint">Düzlem ile doğrunun kesişim noktası</param>
+    /// <returns>Doğru ile düzlem kesişiyorsa true ve kesişim noktasını kesişmiyorsa false ve kesişm noktası olarak null döner</returns>
     public bool IntersectLineWithPlane(Matrix<T> lineDir, Matrix<T> planeOrigin, Matrix<T> planeNormal, out Matrix<T> intersectionPoint)
     {
         #region Varsayım 1
@@ -1289,6 +1373,15 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
     }
 
     // İki parametrik doğrunun kesişim noktasını bulur (Kesişim varsa true döner ve out parametresini doldurur)
+
+    /// <summary>
+    /// Parametrik formda olan iki doğrunun kesişip kesişmediğini döndüren metot.Nesnenin arrayindeki değerleri doğrunun başlangıç noktası olarak kabul eder.
+    /// </summary>
+    /// <param name="line1Dir">İlk doğrunun doğrultu vektörü(Direction vector)</param>
+    /// <param name="line2Origin">kinci doğrunun başlangıç noktası</param>
+    /// <param name="line2Dir">İkinci doğrunun doğrultu vektörü(Direction vector)</param>
+    /// <param name="intersectionPoint">İki doğrunun kesişim noktası</param>
+    /// <returns>Eğer iki doğru kesişiyorsa true ve kesişim noktalarını döner kesişmiyorsa false ve kesişim noktası olarak null döner</returns>
     public bool IntersectLineWithLine(Matrix<T> line1Dir, Matrix<T> line2Origin, Matrix<T> line2Dir, out Matrix<T> intersectionPoint)
     {
         //0.Adım: out parametresini tanımlayalım
@@ -1325,7 +1418,13 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return true;
     }
 
-    // Bir noktanın bir düzleme en kısa (dik) uzaklığını hesaplar
+    /// <summary>
+    /// Bir noktanın bir düzleme en kısa (dik) uzaklığını hesaplar.Nesnenin arrayinde tuttuğu noktaları noktanın koordinatları olarak alır.Sadece 3 boyutta işlem yapar.
+    /// </summary>
+    /// <param name="planeOrigin">Düzlemin orijini.Orijin bilinmiyorsa düzlem denklemini sağlayan bir nokta seçilebilir.</param>
+    /// <param name="planeNormal">Düzlemin normali</param>
+    /// <returns>Noktanın düzleme mesafesini döndürür.Matematiksel bir tabirle yansıma vektörünün büyüklüğünü döner</returns>
+    /// <exception cref="ArgumentException">Düzlem ve doğrunun boyut kontrolünün uyuşmaması durumunda bu hatayı fırlatır</exception>
     public T DistanceToPlane(Matrix<T> planeOrigin, Matrix<T> planeNormal)
     {
         //Temel Mantık şu: Düzlemin orijininden noktaya çizilen vektörün düzlemin normali ile olan iç çarpımı noktanın düzleme en kısa uzaklığını verecektir.
@@ -1345,7 +1444,14 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return distance;
         //Not: Biz noktanın doğrunun önünde arkasında vs vs yani neresinde kaldığına göre distance aramıyoruz bu yüzden SignedDistance işaretli mesafe hesaplamamıza gerek yok.
     }
-    // Bir noktanın bir doğruya en kısa (dik) uzaklığını hesaplar
+
+    /// <summary>
+    /// Bir noktanın bir doğruya en kısa (dik) uzaklığını hesaplar.Nesnenin arrayinde tuttuğu noktaları noktanın koordinatları olarak alır.Sadece 3 boyutta işlem yapar.Sadece 3D için doğru sonuç verir.
+    /// </summary>
+    /// <param name="lineOrigin">Doğrunun başlangıç noktası</param>
+    /// <param name="lineDirection">Doğrunun doğrultu vektörü(Direction Vector)</param>
+    /// <returns>Noktanın düzleme mesafesini döndürür.Matematiksel bir tabirle Oluşan paralelkenarın yüksekliğini döner</returns>
+    /// <exception cref="ArgumentException">Verilen metot argümanlarının ve nesnenin boyut kontrolünü yapar</exception>
     public T DistanceToLine(Matrix<T> lineOrigin, Matrix<T> lineDirection)
     {
         //Temel Mantık: Doğrunun başlangıç noktasından  noktaya çizdiğimiz vektör ile direction vektör arasında bir paralelkenar oluşur.Paralelkenarın alanı ise taban alanı çarpı yüksekliktir.Burada yükseklik aslında noktanın doğruya uzaklığını belirtir.O zaman,
@@ -1371,7 +1477,13 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return h;
         //T h = area.Magnitude() / lineDirection.Magnitude();
     }
-    // Bir noktanın doğru üzerindeki izdüşüm noktasını bulur
+    /// <summary>
+    /// Bir noktanın bir doğruya olan en kısa (dik) uzaklığının koordinatlarını verir.Çıkan nokta doğru üzerinde olmalıdır.Sadece 3D'de sonuç verir
+    /// </summary>
+    /// <param name="lineOrigin">Doğrunun başlangıç noktası</param>
+    /// <param name="lineDirection">Doğrunun doğrultu vektörü(Direction Vector)</param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException">Metot argümanları ve nesne için boyut kontrolü uyuşmazsa bu hatayı fırlatır.</exception>
     public Matrix<T> ProjectOnLine(Matrix<T> lineOrigin, Matrix<T> lineDirection)
     {
         //Temel Mantık: Doğrunun başlangıç noktasından noktaya bir vektör çizeceğim. Daha sonra bu vektörü direction vektör ile iç çarpıma sokacağım. Son olarak normalize ettiğim yön vektörü ile iç çarpımdan gelen değeri çarpıp return edeceğim.
@@ -1386,11 +1498,18 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return lineOrigin + projectionVector;
         //DİKKAT: 3. adımı düşünemedim!
     }
+    /// <summary>
+    /// Bir noktanın bir düzleme olan en kısa (dik) uzaklığının koordinatlarını verir.Çıkan nokta düzlem üzerinde olmalıdır.Sadece 3D'de sonuç verir
+    /// </summary>
+    /// <param name="planeOrigin">Düzlemin orijinini temsil eden metot argümanı.Eilnde bir nokta yoksa düzlem denklemini sağlayan bir nokta seçilebilir</param>
+    /// <param name="planeNormal">Düzlemin normalini temsil eden metot argümanı</param>
+    /// <returns>Noktanın düzleme en yakın noktasının koordinatlarını döndürür</returns>
+    /// <exception cref="ArgumentException">Metot argümanları ve nesne için boyut kontrolü uyuşmazsa bu hatayı fırlatır.</exception>
     public Matrix<T> ProjectOnPlane(Matrix<T> planeOrigin, Matrix<T> planeNormal)
     {
         //Temel Mantık şu:Temelde rejection vektörü bulacağız.Düzlemin orijininden notaya bir vektör çiz. Bu vektörün normal üzerine yansımasını(project) al.Yansımayı daha sonra normal ile çarpıp vektör haline getir
         // Noktadan bu vektörü çıkartırsan düzlem üzerindeki koordinatları bulursun.
-        //Formul this - ((n.v)/(n.n)).n .n normal vektörü v ise plane orijinden noktaya çizilen vektör.
+        //Formul this - ((n.v)/(n.n)).n => n normal vektörü v ise plane orijinden noktaya çizilen vektör.
         //Dikkat:Nokta halihazırda düzlem üzerinde ise rejectionVector iç çarpımdan sıfır gelecek çünkü normal ile düzlem üzerindeki bir noktanın iç çarpımı sıfırdır. Cevap olarak this ile belirtilen nokta gelir.
 
         //0.Adım: Boyut kontrolü için gerekli kontrolleri yapan kodu yaz.Ama galiba DistanceToPlane'de yazdığımız için burada gerek yok galiba??
@@ -1410,7 +1529,10 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return this - rejectionVector;
     }
 
-    // Bu vektöre dik olan rastgele bir vektör üretir (İç çarpımı 0 olan)
+    /// <summary>
+    /// Bir vektöre dik olan rastgele bir vektör üreten metot
+    /// </summary>
+    /// <returns>Nesneye dik olan vektör döndürür.</returns>
     public Matrix<T> GetOrthogonalVector()
     {
         //Temel Mantık şu:Rastgele bir vektör üretiyoruz. Bu rastgele vektörü elimizdeki vektör ile çapraz çarpıma sokuyoruz ve return ediyoruz. Çünkü çapraz çarpım iki vektöre dik üçüncü bir vektör üretir.
@@ -1422,16 +1544,24 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         Matrix<T> result = this.Cross(randomVector);
         return result;
     }
-
-    // Ax = b sistemini çözerek x vektörünü/matrisini döndürür
+    /// <summary>
+    /// Ax = b sistemini çözerek x vektörünü/matrisini döndürür
+    /// </summary>
+    /// <param name="b">Lineer denklem sisteminde eşitliğin sağında kalan değişkeni temsil eden metot argümanı</param>
+    /// <returns>Denklem sisteminin çözümünü temsil eden matrisi döndürür.</returns>
     public Matrix<T> Solve(Matrix<T> b)
     {
         //Temel Mantık şu: A matrisinin tersini DecomposeToLu() metodu ile tersini alacağım daha sonra aşırı yüklediğim * operatörü kullanara ile b'yi sağdan  ters matris ile çarpacağım.
         Matrix<T> inverse = this.DecomposeToLu();
         return b * inverse;
     }
+    /// <summary>
+    /// Matematiksel bir fonksiyonu matrisin tüm elemanlarına uygulayan metot.Mevcut matris üzerinde değişiklik yaparak çalışır herhangi bir şekilde matrisin kopyasını oluşturmaz!
+    /// </summary>
+    /// <param name="function">Matris elemanlarının her birine uygulanacak matematiksel fonksiyonu temsil eden metot argümanı</param>
+    /// <returns>İşlem sonucu çıkan matrisi döndürür</returns>
+    /// <exception cref="ArgumentNullException">Argüman olarak verilen fonksiyon null ise bu hatayı fırlatır.</exception>
 
-    // Dışarıdan verilen bir matematiksel fonksiyonu matrisin tüm elemanlarına uygular
     public Matrix<T> Map(Func<T, T> function)
     {
         // 0.Adım: Argüman olarak verilen function'ın null olup olmadğının kontrolünü yapalım.Yoksa null hatası fırlatır.
@@ -1446,7 +1576,12 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return this;
 
     }
-    // Map metodunun matrisin kendisini değiştirmeyip, yeni bir matris döndüren versiyonu
+    /// <summary>
+    /// Matematiksel bir fonksiyonu matrisin tüm elemanlarına uygulayan metot.Mevcut matris üzerinde değişiklik yapmaz.Mevcut matrisin bir kopyasını oluşturarak işlem yapar. 
+    /// </summary>
+    /// <param name="function">Matris elemanlarının her birine uygulanacak matematiksel fonksiyonu temsil eden metot argümanı</param>
+    /// <returns>İşlem sonucu çıkan yeni bir matris döndürür</returns>
+    /// <exception cref="ArgumentNullException">Argüman olarak verilen fonksiyon null ise bu hatayı fırlatır</exception>
     public Matrix<T> MapCopy(Func<T, T> function)
     {
         // 0.Adım: Argüman olarak verilen function'ın null olup olmadğının kontrolünü yapalım.Yoksa null hatası fırlatır. 
@@ -1459,10 +1594,6 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         //1.Adım: DRY prensibine uymak için önceden yazdığım kodu çağırdım
         return copy.Map(function);
     }
-
-
-
-
 
 
     #region Static Metotlar
