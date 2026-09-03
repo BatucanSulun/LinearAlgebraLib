@@ -9,6 +9,7 @@ using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 
 //
 
@@ -146,27 +147,73 @@ using System.Linq;
 
 //string metin = "abc";// Hafızada yeri caer/// strings are immutable 
 //metin += "d";// hafızada yeni bir yer 
+//Matrix<float> point = new(1, 3);
+//point.AddValue(1, 0);
+//point.AddValue(2, 1);
+//point.AddValue(2, 2);
+
+//Matrix<float> planeOrigin = new(1, 3);
+//planeOrigin.AddValue(1, 0);
+//planeOrigin.AddValue(0, 1);
+//planeOrigin.AddValue(0, 2);
+
+//Matrix<float> planeNormal = new(1, 3);
+//planeNormal.AddValue(2, 0);
+//planeNormal.AddValue(-1, 1);
+//planeNormal.AddValue(2, 2);
+
+//Matrix<float>enYakinKoordinat= point.ProjectOnPlane(planeOrigin, planeNormal);
+
+//Console.WriteLine("En Yakın Nokta:");
+//enYakinKoordinat.Print();
+
+//Soru çözümü kodları
+//Matrix<float> matrixA = new(3, 3);
+//Matrix<float> matrixB = new(3,1);
+//matrixA.AddValue(2, 0);
+//matrixA.AddValue(1, 1);
+//matrixA.AddValue(3, 2);
+//matrixA.AddValue(1, 3);
+//matrixA.AddValue(-1,4);
+//matrixA.AddValue(2, 5);
+//matrixA.AddValue(4, 6);
+//matrixA.AddValue(3, 7);
+//matrixA.AddValue(5, 8);
+
+//Console.WriteLine("A şıkkının cevabı:");
+//matrixB.AddValue(-9, 0); 
+//matrixB.AddValue(-7, 1); 
+//matrixB.AddValue(-15, 2);
+//Matrix<float> result = matrixA.Solve(matrixB);
+//result.Print();
+
+//Console.WriteLine("B şıkkının cevabı:");
+//matrixB.AddValue(6, 0);
+//matrixB.AddValue(11, 1);
+//matrixB.AddValue(6, 2);
+//result=matrixA.Solve(matrixB);
+//result.Print();
+
+
+//Console.WriteLine("C şıkkının cevabı:");
+//matrixB.AddValue(0, 0);
+//matrixB.AddValue(0, 1);
+//matrixB.AddValue(0, 2);
+//result = matrixA.Solve(matrixB);
+//result.Print();
+
+//Console.WriteLine("D şıkkının cevabı:");
+//matrixB.AddValue(7, 0);
+//matrixB.AddValue(8, 1);
+//matrixB.AddValue(9, 2);
+//result = matrixA.Solve(matrixB);
+//result.Print();
+
+//Console.WriteLine($"A matrisinin determinant: {matrixA.GetDeterminant()}");
+////Determinantın sıfır çıkması durumunda kod patlar.
 #endregion
 
-Matrix<float> point = new(1, 3);
-point.AddValue(1, 0);
-point.AddValue(2, 1);
-point.AddValue(2, 2);
 
-Matrix<float> planeOrigin = new(1, 3);
-planeOrigin.AddValue(1, 0);
-planeOrigin.AddValue(0, 1);
-planeOrigin.AddValue(0, 2);
-
-Matrix<float> planeNormal = new(1, 3);
-planeNormal.AddValue(2, 0);
-planeNormal.AddValue(-1, 1);
-planeNormal.AddValue(2, 2);
-    
-Matrix<float>enYakinKoordinat= point.ProjectOnPlane(planeOrigin, planeNormal);
-
-Console.WriteLine("En Yakın Nokta:");
-enYakinKoordinat.Print();
 
 class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını kullanmak için IFloat tipinden kalıtım aldık.
 {
@@ -411,11 +458,12 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
             return inverse;
         }
 
+        // --- 3x3 ve DAHA BÜYÜK MATRİSLER ---
+
         // 2. ADIM: Lower Triangular, Upper Triangular ve Permütasyon matrislerini tanımlayalım.
         Matrix<T> permutation = GenerateIdentity(row);
         Matrix<T> lowerTriangular = GenerateIdentity(row);
 
-        // --- 3x3 ve DAHA BÜYÜK MATRİSLER ---
 
         // 1. Kısım: LU Ayrışımını (Decomposition) Yapma
         for (int p = 0; p < row; p++)
@@ -518,7 +566,7 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
     }
 
     /// <summary>
-    /// Gauss-Jordan Yöntemi ile matrisin tersini alır.DİKKAT!: Pivot noktalarının üstünde kalan değerleri satır değiştirme işlemi yapamadığımız için  yuvarlama hatası(round-off error) yapabilir!! DİKKAT: Sıfır kontrolünü tolerans ile yapmıyoruz direkt olarak tipin T.Zero ile kontrolü yapılıyor.
+    /// Gauss-Jordan Yöntemi ile matrisin tersini alır.DİKKAT!: Pivot noktalarının üstünde kalan değerleri satır değiştirme işlemi yapamadığımız için  yuvarlama hatası(round-off error) yapabilir!.Bu yüzden LU Decomposition kullanmak daha doğru sonuç verir.DİKKAT: Sıfır kontrolünü tolerans ile yapmıyoruz direkt olarak tipin T.Zero ile kontrolü yapılıyor.
     /// </summary>
     /// <exception cref="ArgumentException">Matris kare değilse hata fırlatır.</exception>
     public Matrix<T> GaussJordanInverse()
@@ -1261,8 +1309,6 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         //4.Adım: result matrisini döndürelim
         return result;
     }
-    //Hadamard çarpımı için ElementWiseProduct adında delegate ekleme işini yaptım.Dikkat et bu metot zaten nesne üzerinden çağrılacağı için herhangi bir şekilde this ile kullanmana gerek yok.
-
     /// <summary>
     /// Hadamard Çaprımını yapan ancak ismi farklı olan metot.Metot özünde HadamardPrduct() metodunun bir delegate'dir 
     /// </summary>
@@ -1371,8 +1417,6 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         intersectionPoint._values[2] = z;
         return true;
     }
-
-    // İki parametrik doğrunun kesişim noktasını bulur (Kesişim varsa true döner ve out parametresini doldurur)
 
     /// <summary>
     /// Parametrik formda olan iki doğrunun kesişip kesişmediğini döndüren metot.Nesnenin arrayindeki değerleri doğrunun başlangıç noktası olarak kabul eder.
@@ -1553,7 +1597,7 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
     {
         //Temel Mantık şu: A matrisinin tersini DecomposeToLu() metodu ile tersini alacağım daha sonra aşırı yüklediğim * operatörü kullanara ile b'yi sağdan  ters matris ile çarpacağım.
         Matrix<T> inverse = this.DecomposeToLu();
-        return b * inverse;
+        return inverse * b; //Boyut tutması için b'yi inverse ile soldan çarpmamız lazım
     }
     /// <summary>
     /// Matematiksel bir fonksiyonu matrisin tüm elemanlarına uygulayan metot.Mevcut matris üzerinde değişiklik yaparak çalışır herhangi bir şekilde matrisin kopyasını oluşturmaz!
@@ -1584,6 +1628,7 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
     /// <exception cref="ArgumentNullException">Argüman olarak verilen fonksiyon null ise bu hatayı fırlatır</exception>
     public Matrix<T> MapCopy(Func<T, T> function)
     {
+        //HER SATIR VEYA SÜTUNUN VARYANSINI HESAPLAYABİLİYOR OLMAK GEREKİYOR!!!
         // 0.Adım: Argüman olarak verilen function'ın null olup olmadğının kontrolünü yapalım.Yoksa null hatası fırlatır. 
         if (function == null)
         {
@@ -1595,8 +1640,148 @@ class Matrix<T> where T : IFloatingPointIeee754<T> //Generic math sınıfını k
         return copy.Map(function);
     }
 
+    /// <summary>
+    /// Matrisin tüm değerlerin ortalamasını veya eksenlere göre ortalamasını bulan metot.
+    /// </summary>
+    /// <param name="axis">Hangi eksene göre ortalama hesaplanacağını belirten metot argümanı.0 için sütunların ortalaması, 1 için satırların ortalamasını,-1 için ise tüm değerlerin ortalamasını alır.Default olarak axis= -1 tüm değerlerin ortalamasını alır.</param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException">Axis parametresi için -1,0 veya 1 dışında bir değer verilirse yanlış argüman hatası fırlatır</exception>
+ public Matrix<T> Mean(int axis = -1)
+    {
+        Matrix<T> result;
+        T sum; // Değişkeni burada tanımlıyoruz ama sıfırlamayı döngü içlerinde yapacağız.
+
+        switch (axis)
+        {
+            case 1: // Satır bazlı ortalama (Sağa doğru ezme)
+                    // Satır ortalaması alınırken genelde her satır için 1 değer bulunur. 
+                    // Satır sayısı kadar sonuç çıkacağı için dönüş matrisi (row, 1) yani "sütun vektörü" formatında dönmelidir.
+                result = new Matrix<T>(this.row, 1);
+
+                for (int i = 0; i < this.row; i++)
+                {
+                    sum = T.Zero; 
+                    int rowOffset = i * this.col; 
+
+                    for (int j = 0; j < this.col; j++)
+                    {
+                        // this[i,j] yerine doğrudan diziden (Memory'den) okuyarak müthiş hız kazanıyoruz.
+                        sum += this._values[rowOffset + j];
+                    }
+                    result._values[i] = sum / T.CreateChecked(this.col);
+                }
+                return result;
+
+            case 0: // Sütun bazlı ortalama (Aşağı doğru ezme)
+                    // Sütun sayısı kadar ortalama çıkacağı için dönüş matrisi (1, col) formatında olur.
+                result = new Matrix<T>(1, this.col);
+
+                // HATA 2 ÇÖZÜMÜ: Sütun bazlıysa, DIŞ DÖNGÜ sütunları gezmelidir!
+                for (int j = 0; j < this.col; j++)
+                {
+                    sum = T.Zero; // Her yeni sütuna başlarken toplam sıfırlanır!
+                    for (int i = 0; i < this.row; i++)
+                    {
+                        // Memory'den doğrudan okuma (i * this.col + j)
+                        sum += this._values[i * this.col + j];
+                    }
+                    result._values[j] = sum / T.CreateChecked(this.row);
+                }
+                return result;
+
+            case -1: // Genel Ortalama
+                result = new Matrix<T>(1, 1);
+                sum = T.Zero; // Burada bir kez sıfırlamak yeterli çünkü tek bir döngü var.
+
+                for (int i = 0; i < this._values.Length; i++)
+                {
+                    sum += this._values[i];
+                }
+                result._values[0] = sum / T.CreateChecked(this._values.Length);
+                return result;
+
+            default:
+                throw new ArgumentException("Geçersiz axis değeri girdiniz. Genel ortalama için -1, Sütun bazlı ortalama için 0, Satır bazlı ortalama için 1 değerini giriniz");
+        }
+ 
+}
+
+    public Matrix<T> Variance(int axis = -1)
+    {
+        // Edge Case: Matris boşsa hata fırlat
+        if (this.row == 0 || this.col == 0)
+            throw new InvalidOperationException("Boş matrisin varyansı hesaplanamaz.");
+
+        // 1. Önce istenen eksene göre ortalamaları alıyoruz
+        Matrix<T> means = this.Mean(axis);
+        Matrix<T> result;
+        T diff;
+        T sum;
+
+        switch (axis)
+        {
+            case 1: // Satır bazlı varyans (Her satırın kendi ortalaması çıkarılır)
+                result = new Matrix<T>(this.row, 1);
+
+                for (int i = 0; i < this.row; i++)
+                {
+                    sum = T.Zero;
+                    T rowMean = means._values[i]; // i. satırın KENDİ ortalaması
+                    int rowOffset = i * this.col;
+
+                    for (int j = 0; j < this.col; j++)
+                    {
+                        diff = this._values[rowOffset + j] - rowMean;
+                        sum += diff * diff; // T.Pow yerine doğrudan çarpım (Maksimum Hız)
+                    }
+                    result._values[i] = sum / T.CreateChecked(this.col);
+                }
+                return result;
+
+            case 0: // Sütun bazlı varyans (Her sütunun kendi ortalaması çıkarılır)
+                result = new Matrix<T>(1, this.col);
+
+                for (int j = 0; j < this.col; j++)
+                {
+                    sum = T.Zero;
+                    T colMean = means._values[j]; // j. sütunun KENDİ ortalaması
+
+                    for (int i = 0; i < this.row; i++)
+                    {
+                        diff = this._values[i * this.col + j] - colMean;
+                        sum += diff * diff;
+                    }
+                    result._values[j] = sum / T.CreateChecked(this.row);
+                }
+                return result;
+
+            case -1: // Genel Varyans
+                result = new Matrix<T>(1, 1);
+                sum = T.Zero;
+                T overallMean = means._values[0]; // Genel tek bir ortalama var
+
+                for (int i = 0; i < this._values.Length; i++)
+                {
+                    diff = this._values[i] - overallMean;
+                    sum += diff * diff;
+                }
+                result._values[0] = sum / T.CreateChecked(this._values.Length);
+                return result;
+
+            default:
+                throw new ArgumentException("Geçersiz axis değeri. Genel için -1, Sütun için 0, Satır için 1 giriniz.");
+        }
+    }
 
     #region Static Metotlar
+    /// <summary>
+    /// Argüman olarak verilen tipe göre rastgele bir sayı üreten metot
+    /// </summary>
+    /// <typeparam name="T">Veri tipini belirtir</typeparam>
+    /// <param name="min">Sayı üretilecek aralığın alt sınırı</param>
+    /// <param name="max">Sayı üretilecek aralığın üst sınırı</param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException">Alt sınır üst sınırdan büyükse bu hatayı fırlatır</exception>
     internal static T GetRandomNumber<T>(T min, T max) where T : INumber<T>
     {
         //0.Adım:Argüman kontrolü.Min değer max değerden büyük olursa hata fırlatıyoruz.
